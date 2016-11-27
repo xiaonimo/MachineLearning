@@ -5,16 +5,28 @@
 #include <vector>
 #include <stdio.h>
 #include <assert.h>
+#include <time.h>
+#include <unordered_map>
+
 #include "kmeans.h"
 
 using namespace std;
 
+/* 功能：初始化对象（对象通过无参数构造函数建立）
+ * 参数：原始数据
+ */
+void kmeans::_init(items raw, int _k) {
+	data = raw;
+	nData = data.size();
+	dData = data[0].size();
+	k = _k;
+}
 
 /* 功能：计算数据点之间的欧氏距离
  * 参数：两个点坐标
  */
 double kmeans::_getDist(const point &x, const point &y) {
-	double sum = 0;
+	double sum = 0.;
 	for (int i = 0; i < dData; ++i) {
 		sum += abs(x[i] - y[i])*abs(x[i] - y[i]);
 	}
@@ -61,17 +73,8 @@ point kmeans::_getMean(const items &cluster) {
 double kmeans::_getSSE(const matrix &clusters, const items &means) {
 	double res = 0;
 	int i = 0;
-	//int clusters_sz = clusters.size();
-	//for (int i = 0; i < clusters_sz; ++i) {
-	//	for (int j = 0; j < dData; ++j) {
-	//		//overflow!!!
-	//		res += getDist(clusters[i][j], means[i]);
-	//	}
-	//}
 	for (const auto &c : clusters) {
-		for (const auto &p : c) {
-			res += _getDist(p, means[i]);
-		}
+		res += _getSSE(c, means[i]);//调用另一个重载函数
 		++i;
 	}
 	return res;
@@ -96,8 +99,18 @@ void kmeans::_initMeans(const items &data, items &means, int k) {
 	for (int i = 0; i < k; ++i) {
 		means[i] = data[i];
 	}
+	//随机初始化聚类中心
 	//测试不同的means初始值对聚类过程的影响
+	/*unordered_map<int, int> hmap;
+	for (int i = 0; i < k;) {
+		srand((unsigned)time(nullptr)+(unsigned)i);
+		int _index = rand() % data.size();
+		if (hmap[_index]) continue;
 
+		means[i] = data[_index];
+		hmap[_index]++;
+		++i;
+	}*/
 }
 
 /* 功能：打印点数据（多维度）
@@ -132,9 +145,11 @@ matrix kmeans::_k_means(const items &data, int k) {
 		cout << "K IS WRONG!!!" << endl;
 		return matrix();
 	}
-	matrix _clusters(k);
-	items means(k);
-	double sse = 0, osse = 0;
+	
+	matrix	_clusters(k);
+	items	means(k);
+	double	sse = 0, osse = 0;
+
 	//means赋予初始值
 	_initMeans(data, means, k);
 	//进行有限次数的迭代
@@ -157,9 +172,8 @@ matrix kmeans::_k_means(const items &data, int k) {
 			cout << cluster.size() << ":";
 		}*/
 
-		//输出SSE：
+		//计算SSE：
 		sse = _getSSE(_clusters, means);
-		//cout << osse - sse << endl;
 		if (abs(osse - sse) < RCUR_ACC) {
 			//cout << "K-means completed!" << endl;
 			//freopen("CON", "r", stdin);
@@ -224,6 +238,7 @@ matrix kmeans::_b_kmeans(const items &data, int k) {
 
 	vec.push_back(make_pair(_getSSE(data, _getMean(data)), data));
 	
+	//迭代，调用k=2的kmeans算法
 	for (int i = 0; i < k; ++i) {
 		items maxSSEItems = _getMaxSSECluster(vec);
 		matrix res = _k_means(maxSSEItems, 2);
@@ -235,20 +250,19 @@ matrix kmeans::_b_kmeans(const items &data, int k) {
 		}
 		cout << endl;
 	}
+	//从pair中获取所有聚类
 	for (const auto &p : vec) {
 		_clusters.push_back(p.second);
 	}
 	return _clusters;
 }
-/* 在文件中读取数据
-*/
 
 /* 功能：读取数据，这里使用了c代码
  * 参数：数据集变量的引用，该变量提前申请定义
  */
-void kmeans::_getData(items &data) {
+void kmeans::_getData(items &data, const char* filename) {
 	//这里使用C代码，可以加快读取数据的速度
-	freopen(FILEPATH, "r", stdin);
+	freopen(filename, "r", stdin);
 	for (auto &point_data : data) {
 		for (int i = 0; i < dData; ++i) {
 			scanf("%lf,", &point_data[i]);
@@ -262,7 +276,27 @@ void kmeans::_getData(items &data) {
  */
 void kmeans::printClusters() {
 	cout << endl << "The results of clustering:" << endl;
-	for (const auto& clu : clusters)
+	double sse = .0;
+	//cout << "SSE = " << _getSSE(clusters, means);
+	for (const auto& clu : clusters) {
 		cout << clu.size() << "-";
-	cout << endl;
+		sse += _getSSE(clu, _getMean(clu));
+	}
+	cout << endl<< "SSE = " << sse << endl;
+}
+
+/*功能：定义在类外部的数据读取功能，
+ *参数：数据的维度信息
+ */
+items getData(int _nData, int _dData, const char* filename) {
+	//这里使用C代码，可以加快读取数据的速度
+	items res(_nData, point(_dData));
+	freopen(filename, "r", stdin);
+	for (auto &point_data : res) {
+		for (int i = 0; i < _dData; ++i) {
+			scanf("%lf,", &point_data[i]);
+		}
+	}
+	fclose(stdin);
+	return res;
 }
