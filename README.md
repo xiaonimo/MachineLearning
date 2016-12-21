@@ -4,7 +4,7 @@
 - python
 - 基于密度的聚类方法
 
-<img src="https://github.com/xiaonimo/MachineLearning/blob/master/DBSCAN/result.PNG" width=300 height=250/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/DBSCAN/result.PNG" width=300 height=250/><img src="https://github.com/xiaonimo/MachineLearning/blob/master/DBSCAN/result2.PNG" width=300 height=250/>
 
 ---
 ###Kmeans
