@@ -4,11 +4,11 @@
 using namespace std;
 
 class KNN{
-	typedef double point_t;
-	typedef vector<point_t> point;
-	typedef vector<point>	items;
-	typedef int				label_t;
-	typedef vector<label_t> label;
+	typedef double 			point_t;
+	typedef vector<point_t> 	point;
+	typedef vector<point>		items;
+	typedef int			label_t;
+	typedef vector<label_t> 	label;
 	typedef double(*f_dist)(point, point);
 
 public:
@@ -25,9 +25,9 @@ public:
 	double		accuracy_score(label, label);
 
 private:
-	char		algo;	//Ê¹ÓÃºÎÖÖËã·¨¼ÆËãK½üÁÚ£¿±©Á¦ËÑË÷ or KD Tree
-	int			p;		//minkowski ¾àÀëµÄÖ¸Êı
-	int			k;		//½üÁÚÊıÁ¿
+	char		algo;		//ä½¿ç”¨ä½•ç§ç®—æ³•è®¡ç®—Kè¿‘é‚»ï¼Ÿæš´åŠ›æœç´¢ or KD Tree
+	int		p;		//minkowski è·ç¦»çš„æŒ‡æ•°
+	int		k;		//è¿‘é‚»æ•°é‡
 	f_dist		dist_func;
 
 private:
