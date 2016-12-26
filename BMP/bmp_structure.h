@@ -3,6 +3,7 @@
 
 using namespace std;
 
+const double PI = 3.1415926;
 typedef unsigned char	BYTE;
 typedef unsigned short	WORD;
 typedef unsigned int	DWORD;
@@ -63,14 +64,26 @@ public:
 	void showBmpInfoHead();
 	void showPixels();
 	tagIMAGEDATA getPixels(long int, long int);
-	void colorInvert(unsigned char maxPixel = 255);
-	void RGB2YIQ(const char*);
-	void RGB2HSI(const char*);
-	void RGB2XYZ(const char*);
-	void invide(const char*, BYTE val=120);
-	void OSTU(const char*);
-	void addSalt(unsigned int salt = 50, unsigned int pepper = 50);
-	void addGaussian(unsigned int g=100);
+	void color2gray();
+	void RGB2YIQ();
+	void RGB2HSI();
+	void RGB2XYZ();
+	void RGB2YCrCb();
+	void invide(BYTE val = 120);
+	void OSTU();
+	void halfTone(BYTE threhold = 0);
+	void addSaltPeppers(unsigned int salt = 50, unsigned int pepper = 50);
+	void addGaussian(unsigned int g = 100);
+	void medianFilter();
+	void meanFilter();
+	void convolution(vector<vector<int>>);
+	void HistogramEqualization();
+	void HistogramMatch(vector<double> spe_pro);
+	int  SumGray(unsigned x1, unsigned x2, unsigned y1, unsigned y2);
+	void DCT();
+	void IDCT();
+	void DFT();
+	void IDFT();
 
 private:
 	int		_file_head_size;
@@ -79,5 +92,14 @@ private:
 	int		_quad_size;
 
 private:
-
+	vector<BYTE> _get_median(const vector<tagIMAGEDATA>&);
+	BYTE	_get_threhold();
+	void	_minmax(vector<BYTE>& vec, unsigned int i, unsigned int j) {
+		if (vec[i] > vec[j]) swap(vec[i], vec[j]);
+	}
+	BYTE	_get_m(vector<BYTE>& vec);
+	void	_DCT(unsigned, unsigned);
+	void	_IDCT(unsigned, unsigned);
+	void	_DFT(unsigned, unsigned);
+	void	_IDFT(unsigned, unsigned);
 };
