@@ -7,8 +7,8 @@
 - 右图：2000数据点，eps=10，minPts=3，time=1015s
 - 时间效率略差
 
-<img src="https://github.com/xiaonimo/MachineLearning/blob/master/DBSCAN/result.PNG" width=300 height=250/>
-<img src="https://github.com/xiaonimo/MachineLearning/blob/master/DBSCAN/result2.PNG" width=300 height=250/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/DBSCAN/result.PNG" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/DBSCAN/result2.PNG" width=128 height=128/>
 
 ---
 ### Kmeans
