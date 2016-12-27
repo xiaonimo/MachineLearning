@@ -42,3 +42,19 @@
 - 基于scikit-learn库，PCA+SVM
 - 20000个训练样本，120维
 - 准确率>98%
+---
+### BMP
+- C++
+- 实现对BMP图像的读取，存储，以及一些处理
+- 读取，保存，直方图均衡化，直方图规定化，中值滤波，均值滤波，色域转换，OSTU，halftone，噪声模型，DCT，IDCT等
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_gray.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_gray_he2.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_gray_halftone.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_gray_otsu.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_gray_hm.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_laplacian.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/salt.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/salt_medianfilter.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_gray_dct.bmp" width=128 height=128/>
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/BMP/pics/lena_gray_idct.bmp" width=128 height=128/>
