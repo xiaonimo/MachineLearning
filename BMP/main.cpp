@@ -5,12 +5,12 @@
 
 using namespace std;
 
-int main(){
+ int main(){
 	IP a;
 
 	/********************实验一********************/
 	//加载图片到内存。
-	a.loadPic(".\\pics\\lena_gray_dct.BMP");
+	a.loadPic(".\\pics\\air_gray.BMP");
 
 	//图片信息，下面三个函数分别是显示文件头，显示信息头，显示位图数据
 	//a.showBmpFileHead();
@@ -24,11 +24,12 @@ int main(){
 
 	/********************实验二********************/
 	//a.RGB2YCrCb();
-	//a.DCT();
+	a.DCT();
+	a.savePic(".\\pics\\air_gray_dct.bmp");
+	a.IDCT(56);
+	a.savePic(".\\pics\\air_gray_idct_56.bmp");
 	//a.DFT();
-	a.IDCT();
 	//a.IDFT();
-
 
 	/********************实验三********************/
 	//二值化处理
@@ -57,7 +58,7 @@ int main(){
 	//cout << a.SumGray(0, 0, 511, 511);
 
 	//保存图片
-	a.savePic(".\\pics\\lena_gray_idct.bmp");
+	//a.savePic(".\\pics\\lena_gray_dct.bmp");
 	
 	system("pause");
 }

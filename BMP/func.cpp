@@ -282,7 +282,7 @@ void IP::addSaltPeppers(unsigned int salt, unsigned int pepper) {
 	}
 }
 
-void IP::addGaussian(unsigned int g) {
+void IP::addGaussian() {
 	srand((unsigned)time(nullptr));
 	unsigned int w = info_header.biWidth;
 	unsigned int h = info_header.biHeight;
@@ -520,38 +520,66 @@ int IP::SumGray(unsigned x1, unsigned y1, unsigned x2, unsigned y2) {
 void IP::DCT() {
 	unsigned w = info_header.biWidth;
 	unsigned h = info_header.biHeight;
-	for (unsigned i = 0; i < h; i+=8) {
-		for (unsigned j = 0; j < w; j += 8)
+	_dctvec = vector<vector<double>>(h, vector<double>(w, 0.));
+	for (unsigned i = 0; i < h; i += DCT_SIZE) {
+		for (unsigned j = 0; j < w; j += DCT_SIZE)
 			_DCT(i, j);
+	}
+	cout << "DCT matrix" << endl;
+	for (unsigned i = 0; i < DCT_SIZE; ++i) {
+		for (unsigned j = 0; j < DCT_SIZE; ++j)
+			printf("%4.1f\t", _dctvec[i][j]);
+		cout << endl;
 	}
 }
 
-void IP::IDCT() {
+void IP::IDCT(unsigned cnt) {
+	/*_mask = { { 1, 1, 1, 1, 1, 1, 1, 1 },
+			  { 1, 1, 1, 1, 1, 1, 1, 0 },
+			  { 1, 1, 1, 1, 1, 1, 0, 0 },
+			  { 1, 1, 1, 1, 1, 0, 0, 0 },
+			  { 1, 1, 1, 1, 0, 0, 0, 0 },
+			  { 1, 1, 1, 0, 0, 0, 0, 0 },
+			  { 1, 1, 0, 0, 0, 0, 0, 0 },
+			  { 1, 0, 0, 0, 0, 0, 0, 0 } };*/
+	//初始化掩码表
+	_mask = vector<vector<int>>(DCT_SIZE, vector<int>(DCT_SIZE));
+	_initMask(cnt);
+	
+	//打印掩码表
+	for (unsigned i = 0; i < DCT_SIZE; ++i) {
+		for (unsigned j = 0; j < DCT_SIZE; ++j)
+			cout << _mask[i][j] << '\t';
+		cout << endl;
+	}
+	//IDCT主体
 	unsigned w = info_header.biWidth;
 	unsigned h = info_header.biHeight;
-	for (unsigned i = 0; i < h; i += 8) {
-		for (unsigned j = 0; j < w; j += 8)
+	for (unsigned i = 0; i < h; i += DCT_SIZE) {
+		for (unsigned j = 0; j < w; j += DCT_SIZE)
 			_IDCT(i, j);
 	}
-
 }
 
 void IP::DFT() {
 	unsigned w = info_header.biWidth;
 	unsigned h = info_header.biHeight;
-	for (unsigned i = 0; i < h; i += 8) {
-		for (unsigned j = 0; j < w; j += 8)
+	_dftvec = vector<vector<double>>(h, vector<double>(w, 0.));
+	for (unsigned i = 0; i < h; i += DCT_SIZE) {
+		for (unsigned j = 0; j < w; j += DCT_SIZE)
 			_DFT(i, j);
 	}
+	//savePic(".\\pics\\air_gray_dft.bmp");
 }
 
 void IP::IDFT() {
 	unsigned w = info_header.biWidth;
 	unsigned h = info_header.biHeight;
-	for (unsigned i = 0; i < h; i += 8) {
-		for (unsigned j = 0; j < w; j += 8)
+	for (unsigned i = 0; i < h; i += DCT_SIZE) {
+		for (unsigned j = 0; j < w; j += DCT_SIZE)
 			_IDFT(i, j);
 	}
+	//savePic(".\\pics\\air_gray_idft.bmp");
 }
 
 vector<BYTE> IP::_get_median(const vector<tagIMAGEDATA>& vec) {
@@ -640,20 +668,21 @@ BYTE IP::_get_threhold() {
 }
 void IP::_DCT(unsigned xoffset, unsigned yoffset) {
 	double result;
-	for (int u = 0; u < 8; ++u) {
-		for (int v = 0; v < 8; ++v) {
-			float functionCoefficientU = (u == 0 && v == 0) ? (float)(1 / sqrt(2.0)) : (float)1;
-			float functionCoefficientV = (u == 0 && v == 0) ? (float)(1 / sqrt(2.0)) : (float)1;
+	for (unsigned u = 0; u < DCT_SIZE; ++u) {
+		for (unsigned v = 0; v < DCT_SIZE; ++v) {
+			float EU = (u == 0 ) ? (float)(1 / sqrt(2.0)) : (float)1;
+			float EV = (v == 0 ) ? (float)(1 / sqrt(2.0)) : (float)1;
 			result = 0.;
 
-			for (int i = 0; i < 8; i++) {
-				for (int j = 0; j < 8; j++) {
-					result += cos(double(2 * i + 1) * (u) * PI / 16.0) * 
-						cos(double((2 * j + 1) * (v) * PI) / 16.0) * (double)data[i + xoffset][j+yoffset].blue;
+			for (unsigned i = 0; i < DCT_SIZE; i++) {
+				for (unsigned j = 0; j < DCT_SIZE; j++) {
+					result += cos(double(2 * i + 1) * (u)* PI / (2.0*DCT_SIZE)) *
+						cos(double((2 * j + 1) * (v)* PI) / (2.0*DCT_SIZE)) * (double)data[i + xoffset][j + yoffset].blue;
 				}
 			}
-			//printf("%f\t\t\t%d\n", functionCoefficientU * functionCoefficientV * 0.25 * result, BYTE(functionCoefficientU * functionCoefficientV * 0.25 * result));
-			data_tmp[u + xoffset][v + yoffset].blue = BYTE(functionCoefficientU * functionCoefficientV * 0.25 * result);
+			_dctvec[xoffset + u][yoffset + v] = EU * EV * (2.0 / DCT_SIZE) * result;
+			//printf("%f\t\t\t%d\n", EU * EV * 0.25 * result, BYTE(EU * EV * 0.25 * result));
+			data_tmp[u + xoffset][v + yoffset].blue = BYTE(EU * EV * (2.0 / DCT_SIZE) * result);
 			data_tmp[u + xoffset][v + yoffset].green = data_tmp[u + xoffset][v + yoffset].blue;
 			data_tmp[u + xoffset][v + yoffset].red = data_tmp[u + xoffset][v + yoffset].blue;
 		}
@@ -661,20 +690,20 @@ void IP::_DCT(unsigned xoffset, unsigned yoffset) {
 }
 void IP::_IDCT(unsigned xoffset, unsigned yoffset) {
 	double result;
-	for (int u = 0; u < 8; ++u) {
-		for (int v = 0; v < 8; ++v) {
+	for (unsigned u = 0; u < DCT_SIZE; ++u) {
+		for (unsigned v = 0; v < DCT_SIZE; ++v) {
 			result = 0.;
 
-			for (int i = 0; i < 8; ++i) {
-				for (int j = 0; j < 8; ++j) {
-					float functionCoefficientU = (i == 0 && j == 0) ? (float)(1 / sqrt(2.0)) : (float)1;
-					float functionCoefficientV = (i == 0 && j == 0) ? (float)(1 / sqrt(2.0)) : (float)1;
-					result += functionCoefficientU*functionCoefficientV*cos((2 * (u) + 1) * (i) * PI / 16.0) *
-						cos(((2 * (v) + 1) * (j)* PI) / 16.0) * (double)data[i + xoffset][j + yoffset].blue;
+			for (unsigned i = 0; i < DCT_SIZE; ++i) {
+				for (unsigned j = 0; j < DCT_SIZE; ++j) {
+					float EU = (i == 0) ? (float)(1 / sqrt(2.0)) : (float)1;
+					float EV = (j == 0) ? (float)(1 / sqrt(2.0)) : (float)1;
+					result += EU*EV*cos((2 * (u)+1) * (i)* PI / (2.0*DCT_SIZE)) *
+						cos(((2 * (v)+1) * (j)* PI) / (2.0*DCT_SIZE)) * _dctvec[i + xoffset][j + yoffset] * _mask[i][j];
 				}
 			}
 			//printf("%f-%d\n", 0.25 * result, BYTE(0.25 * result));
-			data_tmp[u + xoffset][v + yoffset].blue = BYTE(0.25 * result);
+			data_tmp[u + xoffset][v + yoffset].blue = BYTE((2.0 / DCT_SIZE)  * result);
 			data_tmp[u + xoffset][v + yoffset].green = data_tmp[u + xoffset][v + yoffset].blue;
 			data_tmp[u + xoffset][v + yoffset].red = data_tmp[u + xoffset][v + yoffset].blue;
 		}
@@ -682,15 +711,16 @@ void IP::_IDCT(unsigned xoffset, unsigned yoffset) {
 }
 void IP::_DFT(unsigned xoffset, unsigned yoffset) {
 	double result;
-	for (int u = 0; u < 8; u++) {
-		for (int v = 0; v < 8; v++) {
+	for (unsigned u = 0; u < DCT_SIZE; u++) {
+		for (unsigned v = 0; v < DCT_SIZE; v++) {
 			result = 0.;
-			for (int i = 0; i < 8; i++) {
-				for (int j = 0; j < 8; j++) {
-					result += exp(-0.25*PI*double(u*i + v*j)) * (double)data[i + xoffset][j + yoffset].blue;
+			for (unsigned i = 0; i < DCT_SIZE; i++) {
+				for (unsigned j = 0; j < DCT_SIZE; j++) {
+					result += exp(-2.0*PI*double(u*i + v*j)/(2.0*DCT_SIZE)) * (double)data[i + xoffset][j + yoffset].blue;
 				}
 			}
-			data_tmp[u + xoffset][v + yoffset].blue = BYTE(result*(1.0/8.0));
+			_dftvec[xoffset + u][yoffset + v] = result*(1.0/DCT_SIZE);
+			data_tmp[u + xoffset][v + yoffset].blue = BYTE(result*(1.0 / DCT_SIZE));
 			data_tmp[u + xoffset][v + yoffset].green = data_tmp[u + xoffset][v + yoffset].blue;
 			data_tmp[u + xoffset][v + yoffset].red = data_tmp[u + xoffset][v + yoffset].blue;
 		}
@@ -698,233 +728,40 @@ void IP::_DFT(unsigned xoffset, unsigned yoffset) {
 }
 void IP::_IDFT(unsigned xoffset, unsigned yoffset) {
 	double result;
-	for (int u = 0; u < 8; u++) {
-		for (int v = 0; v < 8; v++) {
+	for (unsigned u = 0; u < DCT_SIZE; u++) {
+		for (unsigned v = 0; v < DCT_SIZE; v++) {
 			result = 0.;
-			for (int i = 0; i < 8; i++) {
-				for (int j = 0; j < 8; j++) {
-					result += exp(0.25*PI*double(u*i + v*j)) * (double)data[i + xoffset][j + yoffset].blue;
+			for (unsigned i = 0; i < DCT_SIZE; i++) {
+				for (unsigned j = 0; j < DCT_SIZE; j++) {
+					result += exp(2.0*PI*double(u*i + v*j)/DCT_SIZE) * _dftvec[i + xoffset][j + yoffset];
 				}
 			}
 			//printf("%d\n", BYTE(((int)result % 256)*(1.0 / 8.0)));
-			data_tmp[u + xoffset][v + yoffset].blue = BYTE(((int)result%256)*(1.0 / 8.0));
+			data_tmp[u + xoffset][v + yoffset].blue = BYTE(result * (1.0 / DCT_SIZE));
 			data_tmp[u + xoffset][v + yoffset].green = data_tmp[u + xoffset][v + yoffset].blue;
 			data_tmp[u + xoffset][v + yoffset].red = data_tmp[u + xoffset][v + yoffset].blue;
 		}
 	}
 }
-/*
-void Bmp::DFT()//离散傅里叶变换
-{
-	int i, j, k, m, n, u, v, RGB;//定义各种参数
-	double real1, image1, big = 0;
-	Complex w_h0(cos(PI_2 / m_Height), -sin(PI_2 / m_Height)), w_w0(cos(PI_2 / m_Width), -sin(PI_2 / m_Width));
-	//所有的傅里叶变换系数都是以上两个参数w_h0与w_w0的整数冥，所以下面先对系数进行计算：
-	Complex *tmpW_H = new Complex[m_Height*m_Height];
-	Complex *tmpW_W = new Complex[m_Width*m_Width];
-	*tmpW_H = 1;
-	for (i = 1; i<m_Height*m_Height; i++)
-	{
-		*(tmpW_H + i) = *(tmpW_H + i - 1)*w_h0;
+void IP::_initMask(unsigned cnt) {
+	if (cnt < 0 || cnt > DCT_SIZE*DCT_SIZE) {
+		cout << "Wrong Mask Number!" << endl;
+		return;
 	}
-	*tmpW_W = 1;
-	for (i = 1; i<m_Width*m_Width; i++)
-	{
-		*(tmpW_W + i) = *(tmpW_W + i - 1)*w_w0;
-	}
-	//以上为确定傅里叶变换参数，下面开辟一个临时存储空间
-	double ***tmp = new double**[m_Color];
-	for (i = 0; i<m_Color; i++)
-	{
-		tmp[i] = new double*[m_Height];
-	}
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height; j++)
-		{
-			tmp[i][j] = new double[m_Width];
+	//Zig-Zag扫描
+	unsigned _cnt = 0;
+	for (unsigned i = 0; i < DCT_SIZE; ++i) {
+		for (int y = i, x = 0; y >= 0; --y, ++x) {
+			_mask[x][y] = 1;
+			_cnt++;
+			if (_cnt >= cnt) return;
 		}
 	}
-	//开辟复数空间存储复数结果
-	for (i = 0; i<m_Color; i++)
-	{
-		if (m_FFTComplex)delete(*(m_FFTComplex + i));
-	}
-	if (m_FFTComplex)delete(m_FFTComplex);
-	m_FFTComplex = new COMPLEX*[m_Color];
-	for (i = 0; i<m_Color; i++)
-	{
-		*(m_FFTComplex + i) = new COMPLEX[m_Height*m_Width];
-	}
-	COMPLEX *tmpFFTComplex;
-	//定义临时复数类便于计算
-	Complex tmpComplex, tmpComplex1;
-
-	for (m = 0; m<m_Height; m++)
-	{
-		for (n = 0; n<m_Width; n++)
-		{
-			for (i = 0; i<m_Color; i++)
-			{
-				tmpComplex = 0;
-				for (j = 0; j<m_Height; j++)
-				{
-					tmpComplex1 = 0;
-					for (k = 0; k<m_Width; k++)
-					{//根据化简的公式对行进行相加
-						v = n*k;
-						tmpComplex1.real += (*(tmpW_W + v)).real*(RGB = (*(*(*(m_RGB + i) + j) + k)));
-						tmpComplex1.image += (*(tmpW_W + v)).image*RGB;
-					}//再对列进行相加
-					u = m*j;
-					real1 = (*(tmpW_H + u)).real;
-					image1 = (*(tmpW_H + u)).image;
-					tmpComplex.real += real1*tmpComplex1.real - image1*tmpComplex1.image;
-					tmpComplex.image += real1*tmpComplex1.image + image1*tmpComplex1.real;
-				}
-				tmp[i][m][n] = tmpComplex.GetAmplitude();//计算幅值用于显示
-				tmpFFTComplex = &(*(*(m_FFTComplex + i) + m*m_Width + n));//存储复数用于以后处理
-				tmpFFTComplex->re = tmpComplex.real;
-				tmpFFTComplex->im = tmpComplex.image;
-			}
-		}
-	}
-
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height; j++)
-		{
-			for (k = 0; k<m_Width; k++)
-			{
-				*(*(*(tmp + i) + j) + k) = log10(*(*(*(tmp + i) + j) + k));//取对数便于显示
-				if (big<tmp[i][j][k])
-					big = tmp[i][j][k];
-			}
-		}
-	}
-
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height; j++)
-		{
-			for (k = 0; k<m_Width; k++)
-			{
-				*(*(*(m_RGB + i) + j) + k) = *(*(*(tmp + i) + j) + k) * 255 / big;//将数据范围拉伸至0-255区间
-			}
-		}
-	}
-
-	int tmpRGB;//中心化幅值图
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height / 2; j++)
-		{
-			for (k = 0; k<m_Width / 2; k++)
-			{
-				tmpRGB = m_RGB[i][j][k];
-				m_RGB[i][j][k] = m_RGB[i][j + m_Height / 2][k + m_Width / 2];
-				m_RGB[i][j + m_Height / 2][k + m_Width / 2] = tmpRGB;
-
-				tmpRGB = m_RGB[i][j + m_Height / 2][k];
-				m_RGB[i][j + m_Height / 2][k] = m_RGB[i][j][k + m_Width / 2];
-				m_RGB[i][j][k + m_Width / 2] = tmpRGB;
-			}
+	for (unsigned i = 1; i < DCT_SIZE; ++i) {
+		for (unsigned x = i, y = 7; x < DCT_SIZE; ++x, --y) {
+			_mask[x][y] = 1;
+			_cnt++;
+			if (_cnt >= cnt) return;
 		}
 	}
 }
-
-void Bmp::FFT()//快速傅立叶变换
-{
-	int i, j, k;
-	double big = 0;
-	COMPLEX **complexOrg = new COMPLEX*[m_Color];//在内存申请原始数据与目的数据的复数空间
-	COMPLEX **complexDes = new COMPLEX*[m_Color];
-
-	for (i = 0; i<m_Color; i++)
-	{
-		*(complexOrg + i) = new COMPLEX[m_Height*m_Width];
-		*(complexDes + i) = new COMPLEX[m_Height*m_Width];
-	}
-
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height; j++)
-		{
-			for (k = 0; k<m_Width; k++)
-			{
-				(*(*(complexOrg + i) + j*m_Width + k)).re = m_RGB[i][j][k];
-				(*(*(complexOrg + i) + j*m_Width + k)).im = 0;
-			}
-		}
-	}
-
-	double ***tmp = new double**[m_Color];
-	for (i = 0; i<m_Color; i++)
-	{
-		tmp[i] = new double*[m_Height];
-	}
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height; j++)
-		{
-			tmp[i][j] = new double[m_Width];
-		}
-	}
-
-	for (i = 0; i<m_Color; i++)
-	{
-		FFT2(*(complexOrg + i), m_Width, m_Height, *(complexDes + i));//调用FFT函数
-	}
-
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height; j++)
-		{
-			for (k = 0; k<m_Width; k++)
-			{
-				tmp[i][j][k] = log10(sqrt((*(*(complexDes + i) + j*m_Width + k)).re*(*(*(complexDes + i) + j*m_Width + k)).re + (*(*(complexDes + i) + j*m_Width + k)).im*(*(*(complexDes + i) + j*m_Width + k)).im));
-				big<tmp[i][j][k] ? big = tmp[i][j][k] : NULL;
-			}//计算出频域，并取对数
-		}
-	}
-
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height; j++)
-		{
-			for (k = 0; k<m_Width; k++)
-			{
-
-				m_RGB[i][j][k] = tmp[i][j][k] * 255 / big;//然后做一次直方图拉伸放大对比度
-			}
-		}
-	}
-
-	int tmpRGB;
-	for (i = 0; i<m_Color; i++)
-	{
-		for (j = 0; j<m_Height / 2; j++)
-		{
-			for (k = 0; k<m_Width / 2; k++)
-			{
-				tmpRGB = m_RGB[i][j][k];
-				m_RGB[i][j][k] = m_RGB[i][j + m_Height / 2][k + m_Width / 2];
-				m_RGB[i][j + m_Height / 2][k + m_Width / 2] = tmpRGB;
-
-				tmpRGB = m_RGB[i][j + m_Height / 2][k];
-				m_RGB[i][j + m_Height / 2][k] = m_RGB[i][j][k + m_Width / 2];
-				m_RGB[i][j][k + m_Width / 2] = tmpRGB;
-			}//中心化
-		}
-	}
-
-	for (i = 0; i<m_Color; i++)
-	{
-		if (m_FFTComplex)delete(*(m_FFTComplex + i));
-		delete(*(complexOrg + i));
-	}
-	delete(m_FFTComplex);
-	delete(complexOrg);
-	m_FFTComplex = complexDes;
-}
-*/
