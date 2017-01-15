@@ -20,7 +20,7 @@ public:
 	label		test_label;
 
 public:
-	KNN(int _k = 20, int _p = 2, char _algo = 'b') 
+	KNN(int _k = 20, int _p = 2, char _algo = 'm') 
 		:k(_k), distp(_p), algo(_algo){}
 	void		fit(items, label);
 	label		predict(items);
@@ -28,17 +28,21 @@ public:
 
 private:
 	char		algo;	//使用何种算法计算K近邻？暴力搜索 or KD Tree
-	int			distp;		//minkowski 距离的指数
+	int			distp;	//minkowski 距离的指数
 	int			k;		//近邻数量
 	//f_dist		dist_func;
+	items		digital_template;
 
 private:
 	void		_fit(items, label);
 	void		_bulid_kdtree();
+	void		_bulid_template();
 	label		_brute_predict();
 	label		_kdtree_predict();
-	label_t		_get_sample_label(point);
+	label		_template_predict();
+	label_t		_get_sample_label_brute(point);
 	label_t		_get_sample_label_kdtree(point);
+	label_t		_get_sample_label_template(point);
 	label_t		_get_most_common_label(label);
 	double		_distance(point, point);
 	double		_accuracy_score(label, label);

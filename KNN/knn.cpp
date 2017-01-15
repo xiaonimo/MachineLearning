@@ -32,6 +32,8 @@ KNN::label KNN::predict(items _data) {
 		return _brute_predict();
 	else if (algo == 't')
 		return _kdtree_predict();
+	else if (algo == 'm')
+		return _template_predict();
 	else {
 		cout << "The function has not been impelmented!!!\n";
 		exit(0);
@@ -58,6 +60,10 @@ void KNN::_fit(items _data, label _label) {
 
 	if (algo == 't')
 		return _bulid_kdtree();
+	if (algo == 'b')
+		;
+	if (algo == 'm')
+		_bulid_template();
 }
 
 /* private
@@ -68,12 +74,36 @@ void KNN::_bulid_kdtree() {
 }
 
 /* private
+* build the digital template(mean)
+*/
+void KNN::_bulid_template() {
+	int cnt[10] = { 0 };
+	items tem(10, point(train_data[0].size()));
+	unsigned train_data_sz = train_data.size();
+	for (unsigned i = 0; i < train_data_sz; ++i) {
+		++cnt[train_label[i]];
+		unsigned point_dem_sz = train_data[0].size();
+		for (unsigned j = 0; j < point_dem_sz; ++j) {
+			tem[train_label[i]][j] += train_data[i][j];
+		}
+	}
+	for (unsigned i = 0; i < 10; ++i) {
+		for (unsigned j = 0; j < tem[0].size(); ++j) {
+			tem[i][j] /= cnt[i];
+			//cout << tem[i][j];
+		}
+		//cout << endl;
+	}
+	digital_template = tem;
+}
+
+/* private
  * predict the test_data using brute search, return label
  */
 KNN::label KNN::_brute_predict() {
 	label res;
 	for (auto sample : test_data) {
-		res.push_back(_get_sample_label(sample));
+		res.push_back(_get_sample_label_brute(sample));
 	}
 	return res;
 }
@@ -89,9 +119,36 @@ KNN::label KNN::_kdtree_predict() {
 }
 
 /* private
+ * predict the result using template
+ */
+KNN::label KNN::_template_predict() {
+	label res;
+	for (auto sample : test_data) {
+		res.push_back(_get_sample_label_template(sample));
+	}
+	return res;
+}
+
+/* private
+ * get a point's label in template way
+ */
+KNN::label_t KNN::_get_sample_label_template(point p) {
+	label_t res;
+	point_t min_dist = DBL_MAX;
+	for (unsigned i = 0; i < 10; ++i) {
+		point_t dist = _distance(p, digital_template[i]);
+		if (dist < min_dist) {
+			res = i;
+			min_dist = dist;
+		}
+	}
+	return res;
+}
+
+/* private
  * get a point's label in brute search way
  */
-KNN::label_t KNN::_get_sample_label(point p) {
+KNN::label_t KNN::_get_sample_label_brute(point p) {
 	vector<pair<point_t, label_t>> que(k, make_pair(DBL_MAX, 0));
 	int n_train_data = train_data.size();
 	for (int i = 0; i < n_train_data; ++i) {
@@ -201,4 +258,6 @@ double KNN::_accuracy_score(label l1, label l2) {
 	}
 	return (double)cnt / l1.size();
 }
+
+
 
