@@ -1,7 +1,6 @@
 import matplotlib.pylab as plt
 import pandas as pd
 from numpy import *
-import time
 
 class LR:
     def load_data(self, file_path):
@@ -27,7 +26,7 @@ class LR:
     def _sigmoid(self, x):
         return 1.0/(1.0+exp(-x))
 
-    def fit(self, x, y, alpha, itr):
+    def fit_gd(self, x, y, alpha, itr):
         x = c_[ones(x.shape[0]), x]
         x = mat(x)
         y = mat(y).transpose()
@@ -38,9 +37,21 @@ class LR:
             _weights = _weights + alpha*x.transpose()*err
         return _weights
 
+    def fit_sgd(self, x, y, alpha, itr):
+        x = c_[ones((x.shape[0])), x]
+        m, n = x.shape
+        _weights = ones(n)
+        for i in range(itr):
+            for i in range(m):
+                h = self._sigmoid(sum(x[i]*_weights))
+                err = y[i] - h
+                _weights = _weights + alpha*err*x[i]
+        return _weights
+
 if __name__ == '__main__':
     l = LR()
-    x,y = l.load_data('data.csv')
-    w = l.fit(x, y, 0.01, 600)
+    x, y = l.load_data('data.csv')
+    w = l.fit_sgd(x, y, 0.5, 500)
+
     l.print_data(x, y, w)
 
