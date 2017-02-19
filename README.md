@@ -23,6 +23,14 @@
 
 ---
 
+---
+### Logistic Regression
+- Python
+- 逻辑回归解决二分类问题
+
+<img src="https://github.com/xiaonimo/MachineLearning/blob/master/LogisticRegression/result.PNG" width=128 height=128/>
+---
+
 ### Puzzle8
 - C++
 - 八数码问题
