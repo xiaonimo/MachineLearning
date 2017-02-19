@@ -22,8 +22,6 @@
 - 基于距离的分类过程
 
 ---
-
----
 ### Logistic Regression
 - Python
 - 逻辑回归解决二分类问题
